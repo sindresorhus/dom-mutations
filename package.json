@@ -1,0 +1,59 @@
+{
+	"name": "dom-mutations",
+	"version": "0.0.0",
+	"description": "Observe changes to the DOM using an async iterable — A nicer API for MutationObserver",
+	"license": "MIT",
+	"repository": "sindresorhus/dom-mutations",
+	"funding": "https://github.com/sponsors/sindresorhus",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "https://sindresorhus.com"
+	},
+	"type": "module",
+	"exports": {
+		"types": "./index.d.ts",
+		"default": "./index.js"
+	},
+	"sideEffects": false,
+	"engines": {
+		"node": ">=18"
+	},
+	"scripts": {
+		"test": "xo && ava"
+	},
+	"files": [
+		"index.js",
+		"index.d.ts"
+	],
+	"keywords": [
+		"mutationobserver",
+		"mutation",
+		"mutations",
+		"observer",
+		"observe",
+		"dom",
+		"document",
+		"node",
+		"element",
+		"html",
+		"changes",
+		"asynciterable",
+		"asynciterator",
+		"iterable",
+		"iterator",
+		"generator",
+		"async",
+		"events",
+		"stream",
+		"loop"
+	],
+	"devDependencies": {
+		"ava": "^5.3.1",
+		"jsdom": "^22.1.0",
+		"xo": "^0.56.0"
+	},
+	"ava": {
+		"serial": true
+	}
+}
