@@ -1,6 +1,6 @@
 import test from 'ava';
 import {JSDOM} from 'jsdom';
-import domMutations from './index.js';
+import domMutations, {batchedDomMutations} from './index.js';
 
 const {window} = new JSDOM('');
 const {document} = window;
@@ -88,4 +88,31 @@ test('handles abort signal', async t => {
 			t.fail();
 		}
 	}, {name: 'AbortError'});
+});
+
+test('captures mutation batches', async t => {
+	document.body.innerHTML = '';
+
+	const div = document.createElement('div');
+	document.body.append(div);
+
+	const div2 = document.createElement('div');
+	document.body.append(div2);
+
+	setTimeout(() => {
+		div.setAttribute('test', 'value1');
+		div2.setAttribute('test', 'value1');
+		div.setAttribute('test', 'value2');
+		div2.setAttribute('test', 'value2');
+	}, 50);
+
+	let batchCount = 0;
+	for await (const mutations of batchedDomMutations(div, {attributes: true})) {
+		t.true(Array.isArray(mutations));
+		t.is(mutations.length, 2);
+
+		if (++batchCount === 1) {
+			break;
+		}
+	}
 });

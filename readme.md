@@ -2,7 +2,7 @@
 
 > Observe changes to the DOM using an async iterable — A nicer API for [MutationObserver](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver)
 
-Only works in the browser.
+This package only works in the browser.
 
 ## Install
 
@@ -24,11 +24,25 @@ for await (const mutation of domMutations(target, {childList: true})) {
 
 ## API
 
-### domMutations(target, options?)
+### domMutations(target, options?) <sup>(default export)</sup>
 
 Accepts the same arguments as [`MutationObserver#observe()`](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver/observe#parameters) with an additional optional [`signal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortController/signal) option to abort the observation. If the signal is triggered, the async iterable throws an [abort error](https://developer.mozilla.org/en-US/docs/Web/API/AbortController/abort).
 
 Returns an [`AsyncIterable`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols) that yields [`MutationRecord`](https://developer.mozilla.org/en-US/docs/Web/API/MutationRecord) objects representing individual mutations.
+
+### batchedDomMutations(target, options?) <sup>(named export)</sup>
+
+Similar to `domMutations()`, but yields batches of [`MutationRecord`](https://developer.mozilla.org/en-US/docs/Web/API/MutationRecord) objects, each batch representing a group of mutations captured together. This method is less convenient, but can be useful in some cases when you need to handle mutations together as a group.
+
+```js
+import {batchedDomMutations} from 'dom-mutations';
+
+const target = document.querySelector('#unicorn');
+
+for await (const mutations of batchedDomMutations(target, {childList: true})) {
+	console.log('Batch of mutations:', mutations);
+}
+```
 
 ## FAQ
 

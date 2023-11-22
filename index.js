@@ -1,4 +1,14 @@
-export default function domMutations(target, {signal, ...options} = {}) {
+export default function domMutations(target, options = {}) {
+	return {
+		async * [Symbol.asyncIterator]() {
+			for await (const mutations of batchedDomMutations(target, options)) {
+				yield * mutations;
+			}
+		},
+	};
+}
+
+export function batchedDomMutations(target, {signal, ...options} = {}) {
 	return {
 		async * [Symbol.asyncIterator]() {
 			signal?.throwIfAborted();
@@ -21,7 +31,7 @@ export default function domMutations(target, {signal, ...options} = {}) {
 				while (true) {
 					signal?.throwIfAborted();
 
-					yield * await new Promise((resolve, reject) => { // eslint-disable-line no-await-in-loop
+					yield await new Promise((resolve, reject) => { // eslint-disable-line no-await-in-loop
 						resolveMutations = resolve;
 						rejectMutations = reject;
 					});
