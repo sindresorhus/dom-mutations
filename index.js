@@ -1,7 +1,10 @@
-export default function domMutations(target, options) {
+export default function domMutations(target, {signal, ...options} = {}) {
 	return {
 		async * [Symbol.asyncIterator]() {
+			signal?.throwIfAborted();
+
 			let resolveMutations;
+			let rejectMutations;
 
 			const observer = new globalThis.MutationObserver(mutations => {
 				resolveMutations?.(mutations);
@@ -9,10 +12,18 @@ export default function domMutations(target, options) {
 
 			observer.observe(target, options);
 
+			signal?.addEventListener('abort', () => {
+				rejectMutations?.(signal.reason);
+				observer.disconnect();
+			}, {once: true});
+
 			try {
 				while (true) {
-					yield * await new Promise(resolve => { // eslint-disable-line no-await-in-loop
+					signal?.throwIfAborted();
+
+					yield * await new Promise((resolve, reject) => { // eslint-disable-line no-await-in-loop
 						resolveMutations = resolve;
+						rejectMutations = reject;
 					});
 				}
 			} finally {

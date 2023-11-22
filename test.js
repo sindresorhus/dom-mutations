@@ -64,3 +64,28 @@ test('stops observing after disconnection', async t => {
 
 	t.false(mutationObserved, 'No mutations should be observed after disconnection');
 });
+
+test('handles abort signal', async t => {
+	document.body.innerHTML = '';
+
+	const div = document.createElement('div');
+	document.body.append(div);
+
+	const controller = new AbortController();
+	const {signal} = controller;
+
+	setTimeout(() => {
+		div.setAttribute('test', 'value');
+	}, 100);
+
+	setTimeout(() => {
+		controller.abort();
+	}, 50);
+
+	await t.throwsAsync(async () => {
+		// eslint-disable-next-line no-unused-vars
+		for await (const mutation of domMutations(div, {attributes: true, signal})) {
+			t.fail();
+		}
+	}, {name: 'AbortError'});
+});

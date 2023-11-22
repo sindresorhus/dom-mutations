@@ -12,4 +12,4 @@ for await (const mutation of domMutations(target, {childList: true})) {
 }
 ```
 */
-export default function domMutations(target: Node, options?: MutationObserverInit): AsyncIterable<MutationRecord>;
+export default function domMutations(target: Node, options?: MutationObserverInit & {signal?: AbortSignal}): AsyncIterable<MutationRecord>;
