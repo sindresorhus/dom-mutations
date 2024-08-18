@@ -1,6 +1,6 @@
 {
 	"name": "dom-mutations",
-	"version": "0.2.0",
+	"version": "1.0.0",
 	"description": "Observe changes to the DOM using an async iterable — A nicer API for MutationObserver",
 	"license": "MIT",
 	"repository": "sindresorhus/dom-mutations",
