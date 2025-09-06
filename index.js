@@ -13,17 +13,20 @@ export function batchedDomMutations(target, {signal, ...options} = {}) {
 		async * [Symbol.asyncIterator]() {
 			signal?.throwIfAborted();
 
-			let resolveMutations;
-			let rejectMutations;
+			let resolveMutations = [];
+			let rejectMutations = [];
 
 			const observer = new globalThis.MutationObserver(mutations => {
-				resolveMutations?.(mutations);
+				const resolve = resolveMutations.shift();
+				resolve?.(mutations);
 			});
 
 			observer.observe(target, options);
 
 			signal?.addEventListener('abort', () => {
-				rejectMutations?.(signal.reason);
+				const reject = rejectMutations.shift();
+				reject?.(signal.reason);
+
 				observer.disconnect();
 			}, {once: true});
 
@@ -32,8 +35,8 @@ export function batchedDomMutations(target, {signal, ...options} = {}) {
 					signal?.throwIfAborted();
 
 					yield await new Promise((resolve, reject) => { // eslint-disable-line no-await-in-loop
-						resolveMutations = resolve;
-						rejectMutations = reject;
+						resolveMutations.push(resolve);
+						rejectMutations.push(reject);
 					});
 				}
 			} finally {
