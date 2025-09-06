@@ -27,6 +27,7 @@ export function batchedDomMutations(target, {signal, ...options} = {}) {
 
 			signal?.addEventListener('abort', () => {
 				isDone = true;
+
 				while (resolvers.length > 0) {
 					const next = resolvers.shift();
 					next.reject(signal.reason);
@@ -42,17 +43,21 @@ export function batchedDomMutations(target, {signal, ...options} = {}) {
 					}
 
 					signal?.throwIfAborted();
+
 					return new Promise((resolve, reject) => {
 						resolvers.push({resolve, reject});
 					});
 				},
 				async return(value) {
 					isDone = true;
+
 					observer.disconnect();
+
 					return {value, done: true};
 				},
 				async throw(error) {
 					await this.return();
+
 					throw error;
 				},
 				[Symbol.asyncIterator]() {
