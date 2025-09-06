@@ -12,9 +12,12 @@ export function batchedDomMutations(target, {signal, ...options} = {}) {
 	signal?.throwIfAborted();
 
 	const resolvers = [];
+
 	let isDone = false;
+
 	const observer = new globalThis.MutationObserver(mutations => {
 		const next = resolvers.shift();
+
 		if (next) {
 			next.resolve({value: mutations, done: false});
 		}
