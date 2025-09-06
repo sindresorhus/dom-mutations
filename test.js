@@ -8,8 +8,6 @@ const {document} = window;
 globalThis.MutationObserver = window.MutationObserver;
 
 test('captures mutations', async t => {
-	document.body.innerHTML = '';
-
 	const div = document.createElement('div');
 	document.body.append(div);
 
@@ -41,8 +39,6 @@ test('captures mutations', async t => {
 });
 
 test('stops observing after disconnection', async t => {
-	document.body.innerHTML = '';
-
 	const div = document.createElement('div');
 	document.body.append(div);
 
@@ -66,8 +62,6 @@ test('stops observing after disconnection', async t => {
 });
 
 test('handles abort signal', async t => {
-	document.body.innerHTML = '';
-
 	const div = document.createElement('div');
 	document.body.append(div);
 
@@ -91,8 +85,6 @@ test('handles abort signal', async t => {
 });
 
 test('captures mutation batches', async t => {
-	document.body.innerHTML = '';
-
 	const div = document.createElement('div');
 	document.body.append(div);
 
@@ -115,4 +107,22 @@ test('captures mutation batches', async t => {
 			break;
 		}
 	}
+});
+
+test('handles calling .return()', async t => {
+	const div = document.createElement('div');
+	document.body.append(div);
+
+	const iterator = batchedDomMutations(div, {childList: true})[Symbol.asyncIterator]();
+
+	// Start asking for mutation
+	iterator.next();
+
+	iterator.return();
+
+	for await (const _ of iterator) {
+		t.fail('Iterator should be closed and not yield any values');
+	}
+
+	t.pass();
 });

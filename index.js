@@ -9,39 +9,55 @@ export default function domMutations(target, options = {}) {
 }
 
 export function batchedDomMutations(target, {signal, ...options} = {}) {
+	signal?.throwIfAborted();
+
+	const resolvers = [];
+	let isDone = false;
+	const observer = new globalThis.MutationObserver(mutations => {
+		const next = resolvers.shift();
+		if (next) {
+			next.resolve({value: mutations, done: false});
+		}
+	});
+
+	observer.observe(target, options);
+
+	signal?.addEventListener('abort', () => {
+		isDone = true;
+		while (resolvers.length > 0) {
+			const next = resolvers.shift();
+			next.reject(signal.reason);
+		}
+
+		observer.disconnect();
+	}, {once: true});
+
 	return {
-		async * [Symbol.asyncIterator]() {
+		async next() {
+			if (isDone) {
+				return {value: undefined, done: true};
+			}
+
 			signal?.throwIfAborted();
 
-			let resolveMutations = [];
-			let rejectMutations = [];
-
-			const observer = new globalThis.MutationObserver(mutations => {
-				const resolve = resolveMutations.shift();
-				resolve?.(mutations);
+			return new Promise((resolve, reject) => {
+				resolvers.push({resolve, reject});
 			});
+		},
+		async return(value) {
+			isDone = true;
 
-			observer.observe(target, options);
+			observer.disconnect();
 
-			signal?.addEventListener('abort', () => {
-				const reject = rejectMutations.shift();
-				reject?.(signal.reason);
+			return {value, done: true};
+		},
+		async throw(error) {
+			await this.return();
 
-				observer.disconnect();
-			}, {once: true});
-
-			try {
-				while (true) {
-					signal?.throwIfAborted();
-
-					yield await new Promise((resolve, reject) => { // eslint-disable-line no-await-in-loop
-						resolveMutations.push(resolve);
-						rejectMutations.push(reject);
-					});
-				}
-			} finally {
-				observer.disconnect();
-			}
+			throw error;
+		},
+		[Symbol.asyncIterator]() {
+			return this;
 		},
 	};
 }
