@@ -25,19 +25,15 @@ export function batchedDomMutations(target, {signal, ...options} = {}) {
 			const cleanup = () => {
 				isDone = true;
 				observer.disconnect();
-
-				// Resolve pending promises when iterator is closed
-				// Only reject when aborted via signal
-				for (const {resolve, reject} of resolvers.splice(0)) {
-					if (signal?.aborted) {
-						reject(signal.reason);
-					} else {
-						resolve({value: undefined, done: true});
-					}
-				}
 			};
 
-			signal?.addEventListener('abort', cleanup, {once: true});
+			signal?.addEventListener('abort', () => {
+				cleanup();
+
+				for (const {reject} of resolvers.splice(0)) {
+					reject(signal.reason);
+				}
+			}, {once: true});
 
 			return {
 				async next() {
@@ -53,6 +49,11 @@ export function batchedDomMutations(target, {signal, ...options} = {}) {
 				},
 				async return(value) {
 					cleanup();
+
+					for (const {resolve} of resolvers.splice(0)) {
+						resolve({value: undefined, done: true});
+					}
+
 					return {value, done: true};
 				},
 				async throw(error) {
