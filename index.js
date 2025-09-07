@@ -17,26 +17,25 @@ export function batchedDomMutations(target, {signal, ...options} = {}) {
 			let isDone = false;
 
 			const observer = new globalThis.MutationObserver(mutations => {
-				const next = resolvers.shift();
-				if (next) {
-					next.resolve({value: mutations, done: false});
-				}
+				resolvers.shift()?.resolve({value: mutations, done: false});
 			});
 
 			observer.observe(target, options);
 
-			signal?.addEventListener('abort', () => {
+			const cleanup = () => {
 				isDone = true;
-
-				while (resolvers.length > 0) {
-					const next = resolvers.shift();
-					next.reject(signal.reason);
-				}
-
 				observer.disconnect();
+			};
+
+			signal?.addEventListener('abort', () => {
+				cleanup();
+
+				for (const {reject} of resolvers.splice(0)) {
+					reject(signal.reason);
+				}
 			}, {once: true});
 
-			const iterator = {
+			return {
 				async next() {
 					if (isDone) {
 						return {value: undefined, done: true};
@@ -49,22 +48,22 @@ export function batchedDomMutations(target, {signal, ...options} = {}) {
 					});
 				},
 				async return(value) {
-					isDone = true;
+					cleanup();
 
-					observer.disconnect();
+					for (const {resolve} of resolvers.splice(0)) {
+						resolve({value: undefined, done: true});
+					}
 
 					return {value, done: true};
 				},
 				async throw(error) {
 					await this.return();
-
 					throw error;
 				},
 				[Symbol.asyncIterator]() {
 					return this;
 				},
 			};
-			return iterator;
 		},
 	};
 }
