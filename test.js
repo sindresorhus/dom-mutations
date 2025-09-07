@@ -129,11 +129,29 @@ test('skips mutations before next()', async t => {
 	t.is(await promiseStateAsync(nextPromise), 'pending', 'next() promise should be pending');
 });
 
-test('handles calling return()', async t => {
+test('batchedDomMutations - handles calling return()', async t => {
 	const div = document.createElement('div');
 	document.body.append(div);
 
 	const iterator = batchedDomMutations(div, {childList: true})[Symbol.asyncIterator]();
+
+	// Start asking for mutation
+	iterator.next();
+
+	iterator.return();
+
+	for await (const _ of iterator) {
+		t.fail('Iterator should be closed and not yield any values');
+	}
+
+	t.pass();
+});
+
+test('domMutations - handles calling return()', async t => {
+	const div = document.createElement('div');
+	document.body.append(div);
+
+	const iterator = domMutations(div, {childList: true})[Symbol.asyncIterator]();
 
 	// Start asking for mutation
 	iterator.next();
