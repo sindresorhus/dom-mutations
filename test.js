@@ -164,3 +164,26 @@ test('domMutations - handles calling return()', async t => {
 
 	t.pass();
 });
+
+test('domMutations - cleans up after throwing', async t => {
+	const div = document.createElement('div');
+	document.body.append(div);
+
+	const iterator = domMutations(div, {childList: true, signal: AbortSignal.timeout(2000)})[Symbol.asyncIterator]();
+
+	await t.throwsAsync(async () => {
+		await iterator.throw(new Error('Test error'));
+	}, {message: 'Test error'});
+
+	(async () => {
+		await delay(500);
+		const div2 = document.createElement('div');
+		div.append(div2);
+	})();
+
+	for await (const _ of iterator) {
+		t.fail('Iterator should be closed and not yield any values');
+	}
+
+	t.pass();
+});
