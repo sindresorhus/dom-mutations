@@ -1,7 +1,7 @@
 export default function domMutations(target, options = {}) {
 	return {
 		[Symbol.asyncIterator]() {
-			const batchedIterator = batchedDomMutations(target, options)[Symbol.asyncIterator]()
+			const batchedIterator = batchedDomMutations(target, options)[Symbol.asyncIterator]();
 
 			const iterator = (async function * () {
 				for await (const mutations of batchedIterator) {
@@ -17,13 +17,13 @@ export default function domMutations(target, options = {}) {
 					await batchedIterator.return();
 					return iterator.return();
 				},
-				async throw(err) {
-					return iterator.throw(err);
+				async throw(error) {
+					return iterator.throw(error);
 				},
 				[Symbol.asyncIterator]() {
 					return this;
 				},
-			}
+			};
 		},
 	};
 }

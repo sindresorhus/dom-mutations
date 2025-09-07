@@ -163,4 +163,4 @@ test('domMutations - handles calling return()', async t => {
 	}
 
 	t.pass();
-})
+});
