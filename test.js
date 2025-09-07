@@ -1,5 +1,7 @@
+import {setTimeout as delay} from 'node:timers/promises';
 import test from 'ava';
 import {JSDOM} from 'jsdom';
+import {promiseStateAsync} from 'p-state';
 import domMutations, {batchedDomMutations} from './index.js';
 
 const {window} = new JSDOM('');
@@ -109,7 +111,25 @@ test('captures mutation batches', async t => {
 	}
 });
 
-test('handles calling .return()', async t => {
+test('skips mutations before next()', async t => {
+	const div = document.createElement('div');
+	document.body.append(div);
+
+	const iterator = domMutations(div, {attributes: true})[Symbol.asyncIterator]();
+
+	// Make some mutations before calling next()
+	div.setAttribute('test', 'value1');
+
+	await delay(100);
+
+	const nextPromise = iterator.next();
+
+	await delay(100);
+
+	t.is(await promiseStateAsync(nextPromise), 'pending', 'next() promise should be pending');
+});
+
+test('handles calling return()', async t => {
 	const div = document.createElement('div');
 	document.body.append(div);
 
