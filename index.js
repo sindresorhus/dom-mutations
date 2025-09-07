@@ -18,6 +18,7 @@ export default function domMutations(target, options = {}) {
 					return iterator.return();
 				},
 				async throw(error) {
+					await batchedIterator.return();
 					return iterator.throw(error);
 				},
 				[Symbol.asyncIterator]() {
